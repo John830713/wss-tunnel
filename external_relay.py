@@ -111,11 +111,14 @@ def main():
             t2 = threading.Thread(target=rdp_to_ws, args=(rdp, ws), daemon=True)
             t1.start(); t2.start()
             t1.join(); t2.join()
-            log("連線中斷，5 秒後重連")
-            time.sleep(5)
+            log("連線中斷，10 秒後重連")
+            ws.close()
+            time.sleep(10)
         except Exception as e:
             log(f"錯誤: {e}")
-            time.sleep(5)
+            try: ws.close()
+            except: pass
+            time.sleep(10)
 
 if __name__ == "__main__":
     main()
