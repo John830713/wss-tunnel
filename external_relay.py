@@ -32,7 +32,8 @@ def handle_cmd(text, rdp_sock):
     try:
         cmd = json.loads(text)
     except:
-        log(f"無效指令: {text[:100]}")
+        return
+    if "t" in cmd and cmd["t"] in ("role", "peer_on", "peer_off"):
         return
     t = cmd.get("cmd", "")
     args = cmd.get("args", "")
@@ -96,15 +97,10 @@ def main():
         try:
             log("正在連線 WebSocket...")
             ws = websocket.WebSocket(ping_interval=30, enable_multithread=True)
-            ws.connect(url, timeout=15)
+            ws.connect(url, timeout=30)
             msg = json.loads(ws.recv())
             role = msg.get("role", "")
             log(f"已連線 (角色: {role})")
-
-            msg2 = json.loads(ws.recv())
-            if msg2.get("t") != "peer_on":
-                log(f"非預期訊息: {msg2}"); ws.close(); time.sleep(3); continue
-            log("公司機已連線")
 
             log(f"正在連線 RDP {RDP_HOST}:{RDP_PORT}...")
             rdp = socket.create_connection((RDP_HOST, RDP_PORT), timeout=10)

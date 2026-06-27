@@ -42,7 +42,9 @@ def pipe(src, dst, name):
                     log(f"pipe {name}: 收到空資料, 結束")
                     break
                 if isinstance(data, str):
-                    log(f"pipe {name}: 跳過控制訊息")
+                    if '"peer_off"' in data:
+                        log(f"pipe {name}: 外部機中斷")
+                        break
                     continue
             else:
                 data = recv_tpkt(src)
@@ -91,16 +93,10 @@ def handle_client(conn, addr):
     log(f"mstsc 連入 {addr}")
     try:
         ws = websocket.WebSocket(ping_interval=30, enable_multithread=True)
-        ws.connect(f"wss://rdp-relay.fly.dev/{ROOM}", timeout=15)
-        msg = json.loads(ws.recv())
-        role = msg.get("role", "")
+        ws.connect(f"wss://rdp-relay.fly.dev/{ROOM}", timeout=30)
+        role = json.loads(ws.recv()).get("role", "")
         log(f"WebSocket 已連線 (角色: {role})")
-
-        msg2 = json.loads(ws.recv())
-        if msg2.get("t") == "peer_on":
-            log("外部機已就緒")
-        elif msg2.get("t") == "peer_off":
-            log("外部機中斷"); ws.close(); return
+        log("外部機已就緒")
 
         with active_lock:
             active_ws = ws
