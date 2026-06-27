@@ -104,6 +104,7 @@ def main():
 
             log(f"正在連線 RDP {RDP_HOST}:{RDP_PORT}...")
             rdp = socket.create_connection((RDP_HOST, RDP_PORT), timeout=10)
+            rdp.settimeout(None)
             log("RDP 已連線，開始轉送")
 
             t1 = threading.Thread(target=ws_to_rdp, args=(ws, rdp), daemon=True)
