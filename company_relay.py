@@ -151,6 +151,8 @@ def handle_client(conn, addr):
             active_ws = None
         try: conn.close()
         except: pass
+        try: ws.close()
+        except: pass
     log(f"結束 {addr}")
 
 def main():
