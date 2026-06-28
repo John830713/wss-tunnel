@@ -69,8 +69,8 @@ def ws_to_rdp(ws, rdp):
                 rdp.sendall(msg)
             elif isinstance(msg, str):
                 handle_cmd(msg, rdp)
-    except:
-        pass
+    except Exception as e:
+        log(f"ws→rdp 錯誤: {e}")
     finally:
         for s in (ws, rdp):
             try: s.close()
@@ -82,8 +82,8 @@ def rdp_to_ws(rdp, ws):
             data = recv_tpkt(rdp)
             if not data: break
             ws.send(data, websocket.ABNF.OPCODE_BINARY)
-    except:
-        pass
+    except Exception as e:
+        log(f"rdp→ws 錯誤: {e}")
     finally:
         for s in (rdp, ws):
             try: s.close()
@@ -110,7 +110,9 @@ def main():
             t1 = threading.Thread(target=ws_to_rdp, args=(ws, rdp), daemon=True)
             t2 = threading.Thread(target=rdp_to_ws, args=(rdp, ws), daemon=True)
             t1.start(); t2.start()
-            t1.join(); t2.join()
+            t1.join()
+            log("ws→rdp pipe 結束")
+            t2.join(timeout=3)
             log("連線中斷，10 秒後重連")
             ws.close()
             time.sleep(10)
