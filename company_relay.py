@@ -5,7 +5,7 @@ LOCAL_HOST = "127.0.0.1"
 LOCAL_PORT = 13389
 CMD_PORT = 13390
 BUFFER = 65536
-ROOM = "relay2026v2"
+ROOM = os.environ.get("ROOM", "relay2026v2")
 XOR_KEY = 0x55
 
 active_ws = None

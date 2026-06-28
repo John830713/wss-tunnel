@@ -4,7 +4,7 @@ import websocket
 RDP_HOST = os.environ.get("RDP_HOST", "127.0.0.1")
 RDP_PORT = int(os.environ.get("RDP_PORT", "3389"))
 BUFFER = 65536
-ROOM = "relay2026v2"
+ROOM = os.environ.get("ROOM", "relay2026v2")
 XOR_KEY = 0x55
 CMD_PORT = 13391
 
@@ -69,6 +69,8 @@ def handle_cmd(text, rdp_sock):
         return out + "\n" + out2
     elif t == "restart":
         log("重新啟動...")
+        subprocess.Popen([sys.executable, os.path.abspath(__file__)])
+        time.sleep(1)
         rdp_sock.close()
         os._exit(0)
     elif t == "exec":
