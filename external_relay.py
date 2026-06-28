@@ -1,4 +1,4 @@
-import socket, threading, sys, json, time, subprocess, os, signal
+import socket, threading, sys, json, time, subprocess, os, signal, select
 import websocket
 
 RDP_HOST = os.environ.get("RDP_HOST", "127.0.0.1")
@@ -93,20 +93,42 @@ def ws_to_rdp(ws, rdp):
             try: s.close()
             except: pass
 
+def recv_tpkt_timeout(sock, timeout=10):
+    buf = b""
+    while len(buf) < 4:
+        ready = select.select([sock], [], [], timeout)
+        if not ready[0]:
+            return None
+        d = sock.recv(4 - len(buf))
+        if not d: return None
+        buf += d
+    if buf[0] == 3:
+        need = ((buf[2] << 8) | buf[3]) - 4
+        while need > 0:
+            ready = select.select([sock], [], [], timeout)
+            if not ready[0]:
+                return None
+            d = sock.recv(need)
+            if not d: return None
+            buf += d
+            need -= len(d)
+    else:
+        d = sock.recv(65536)
+        if not d: return None
+        buf += d
+    return buf
+
 def rdp_to_ws(rdp, ws):
     try:
         n = 0
-        rdp.settimeout(15)
         while True:
-            data = recv_tpkt(rdp)
+            data = recv_tpkt_timeout(rdp)
             if not data: break
             enc = xor(data)
             if n < 3:
                 log(f"rdp→ws 送出: {len(enc)} bytes {enc[:32].hex()}")
                 n += 1
             ws.send(enc, websocket.ABNF.OPCODE_BINARY)
-    except socket.timeout:
-        log("rdp→ws 超時: RDP 15秒內無回應")
     except Exception as e:
         log(f"rdp→ws 錯誤: {e}")
     finally:
