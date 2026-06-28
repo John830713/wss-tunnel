@@ -88,9 +88,20 @@ def cmd_listener():
         except:
             pass
 
+def buffer_reader(src, buf_list):
+    try:
+        data = recv_tpkt(src)
+        if data:
+            buf_list.append(data)
+    except:
+        pass
+
 def handle_client(conn, addr):
     global active_ws
     log(f"mstsc 連入 {addr}")
+    buf = []
+    reader = threading.Thread(target=buffer_reader, args=(conn, buf), daemon=True)
+    reader.start()
     try:
         ws = websocket.WebSocket(ping_interval=30, enable_multithread=True)
         ws.connect(f"wss://rdp-relay.fly.dev/{ROOM}", timeout=30)
@@ -100,6 +111,11 @@ def handle_client(conn, addr):
 
         with active_lock:
             active_ws = ws
+
+        reader.join(timeout=3)
+        if buf:
+            log(f"傳送緩衝 {len(buf[0])} bytes")
+            ws.send(buf[0], websocket.ABNF.OPCODE_BINARY)
 
         t1 = threading.Thread(target=pipe, args=(conn, ws, "C->R"), daemon=True)
         t2 = threading.Thread(target=pipe, args=(ws, conn, "R->C"), daemon=True)
