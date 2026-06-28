@@ -59,6 +59,13 @@ def pipe(src, dst, name):
                     log(f"pipe {name}: 收到空資料, 結束")
                     break
                 if isinstance(data, str):
+                    if '"t": "result"' in data:
+                        try:
+                            r = json.loads(data)
+                            print(f"[外部結果] {r.get('data', '')}", flush=True)
+                        except:
+                            pass
+                        continue
                     if '"peer_off"' in data:
                         log(f"pipe {name}: 外部機中斷，等待重連...")
                         peer_gone_since = time.time()

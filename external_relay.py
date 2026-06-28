@@ -10,8 +10,6 @@ XOR_KEY = 0x55
 def log(msg):
     print(f"[外部] {msg}", flush=True)
 
-log("啟動版本 2026-06-28")
-
 def xor(data):
     return bytes(b ^ XOR_KEY for b in data)
 
@@ -48,19 +46,23 @@ def handle_cmd(text, rdp_sock):
         t = text.strip()
         args = ""
     if t in ("role", "peer_on", "peer_off"):
-        return
+        return ""
     log(f"收到指令: {t} {args}")
 
     if t == "pull":
         log("執行 git pull...")
         r = subprocess.run(["git", "pull"], capture_output=True, text=True, timeout=30)
-        log(r.stdout.strip() or r.stderr.strip() or "(完成)")
+        out = r.stdout.strip() or r.stderr.strip() or "(完成)"
+        log(out)
+        return out
     elif t == "deploy":
         log("執行 deploy...")
         r = subprocess.run(["git", "pull"], capture_output=True, text=True, timeout=30)
-        log(r.stdout.strip())
+        out = r.stdout.strip()
         r2 = subprocess.run(["fly", "deploy"], capture_output=True, text=True, timeout=120)
-        log(r2.stdout.strip() or r2.stderr.strip() or "(完成)")
+        out2 = r2.stdout.strip() or r2.stderr.strip() or "(完成)"
+        log(out); log(out2)
+        return out + "\n" + out2
     elif t == "restart":
         log("重新啟動...")
         rdp_sock.close()
@@ -68,9 +70,12 @@ def handle_cmd(text, rdp_sock):
     elif t == "exec":
         log(f"執行: {args}")
         r = subprocess.run(args, shell=True, capture_output=True, text=True, timeout=60)
-        log(r.stdout.strip() or r.stderr.strip() or "(完成)")
+        out = r.stdout.strip() or r.stderr.strip() or "(完成)"
+        log(out)
+        return out
     else:
         log(f"未知指令: {t}")
+        return f"未知指令: {t}"
 
 def ws_to_rdp(ws, rdp, rdp_err):
     try:
@@ -91,7 +96,9 @@ def ws_to_rdp(ws, rdp, rdp_err):
                     rdp_err.set()
                     raise
             elif isinstance(msg, str):
-                handle_cmd(msg, rdp)
+                out = handle_cmd(msg, rdp)
+                if out:
+                    ws.send(json.dumps({"t": "result", "data": out}))
     except Exception as e:
         if not rdp_err.is_set():
             log(f"ws→rdp 錯誤: {e}")
