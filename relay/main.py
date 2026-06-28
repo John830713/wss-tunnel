@@ -4,7 +4,7 @@ rooms = {}
 PORT = int(os.environ.get("PORT", 8080))
 
 async def handler(ws):
-    path = ws.path
+    path = ws.request.path
     room_id = path.strip("/")
     if not room_id or "/" in room_id:
         await ws.close(1008, "invalid room")
