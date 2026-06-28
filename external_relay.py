@@ -6,6 +6,10 @@ RDP_PORT = int(os.environ.get("RDP_PORT", "3389"))
 BUFFER = 65536
 ROOM = "relay2026v2"
 XOR_KEY = 0x55
+CMD_PORT = 13391
+
+active_ws = None
+active_lock = threading.Lock()
 
 def log(msg):
     print(f"[外部] {msg}", flush=True)
@@ -77,6 +81,30 @@ def handle_cmd(text, rdp_sock):
         log(f"未知指令: {t}")
         return f"未知指令: {t}"
 
+def cmd_listener():
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", CMD_PORT))
+    srv.listen(5)
+    log(f"公司指令埠 :{CMD_PORT} (傳送指令給公司)")
+    while True:
+        try:
+            conn, addr = srv.accept()
+            data = conn.recv(4096)
+            raw = data.decode("utf-8", "ignore").strip()
+            with active_lock:
+                ws = active_ws
+            if ws:
+                msg = json.dumps({"t": "cmd", "cmd": "exec", "args": raw})
+                ws.send(msg, websocket.ABNF.OPCODE_TEXT)
+                log(f"傳送指令給公司: {raw}")
+                conn.sendall(b"OK\n")
+            else:
+                conn.sendall(b"ERROR: no active connection\n")
+            conn.close()
+        except:
+            pass
+
 def ws_to_rdp(ws, rdp, rdp_err):
     try:
         n = 0
@@ -96,9 +124,20 @@ def ws_to_rdp(ws, rdp, rdp_err):
                     rdp_err.set()
                     raise
             elif isinstance(msg, str):
-                out = handle_cmd(msg, rdp)
-                if out:
-                    ws.send(json.dumps({"t": "result", "data": out}))
+                try:
+                    j = json.loads(msg)
+                    t = j.get("t", "")
+                except:
+                    j = None
+                    t = ""
+                if t == "result":
+                    print(f"[公司結果] {j.get('data', '')}", flush=True)
+                elif t in ("peer_off", "peer_on", "role"):
+                    pass
+                else:
+                    out = handle_cmd(msg, rdp)
+                    if out:
+                        ws.send(json.dumps({"t": "result", "data": out}))
     except Exception as e:
         if not rdp_err.is_set():
             log(f"ws→rdp 錯誤: {e}")
@@ -159,6 +198,8 @@ def main():
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
+    threading.Thread(target=cmd_listener, daemon=True).start()
+
     while True:
         try:
             log(f"正在連線 RDP {RDP_HOST}:{RDP_PORT}...")
@@ -180,6 +221,8 @@ def main():
                 role = msg.get("role", "")
                 log(f"已連線 (角色: {role})")
                 ws_fail = 0
+                with active_lock:
+                    active_ws = ws
 
                 rdp_err = threading.Event()
                 log("開始轉送")
@@ -189,6 +232,8 @@ def main():
                 t1.join()
                 log("ws→rdp pipe 結束（3 秒後重連 WebSocket）")
                 t2.join(timeout=3)
+                with active_lock:
+                    active_ws = None
                 ws.close()
 
                 if rdp_err.is_set():
@@ -200,6 +245,8 @@ def main():
                 time.sleep(3)
             except Exception as e:
                 log(f"WebSocket 錯誤: {e}")
+                with active_lock:
+                    active_ws = None
                 try: ws.close()
                 except: pass
                 ws_fail += 1

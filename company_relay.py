@@ -1,4 +1,4 @@
-import socket, threading, sys, json, signal, time
+import socket, threading, sys, json, signal, time, subprocess
 import websocket
 
 LOCAL_HOST = "127.0.0.1"
@@ -41,6 +41,30 @@ def recv_tpkt(sock):
         buf += d
     return buf
 
+def exec_cmd_local(text):
+    try:
+        cmd = json.loads(text)
+        c = cmd.get("cmd", "")
+        args = cmd.get("args", "")
+    except:
+        c = text.strip()
+        args = ""
+    if c in ("role", "peer_on", "peer_off"):
+        return ""
+    log(f"執行本機指令: {c} {args}")
+    if c == "exec":
+        r = subprocess.run(args, shell=True, capture_output=True, text=True, timeout=60)
+        out = r.stdout.strip() or r.stderr.strip() or "(完成)"
+        log(out)
+        return out
+    elif c == "pull":
+        r = subprocess.run(["git", "pull"], capture_output=True, text=True, timeout=30)
+        out = r.stdout.strip() or r.stderr.strip() or "(完成)"
+        log(out)
+        return out
+    else:
+        return f"未知指令: {c}"
+
 def pipe(src, dst, name):
     log(f"pipe {name} 啟動")
     peer_gone_since = None
@@ -59,12 +83,19 @@ def pipe(src, dst, name):
                     log(f"pipe {name}: 收到空資料, 結束")
                     break
                 if isinstance(data, str):
-                    if '"t": "result"' in data:
-                        try:
-                            r = json.loads(data)
-                            print(f"[外部結果] {r.get('data', '')}", flush=True)
-                        except:
-                            pass
+                    try:
+                        j = json.loads(data)
+                        t = j.get("t", "")
+                    except:
+                        j = None
+                        t = ""
+                    if t == "result":
+                        print(f"[外部結果] {j.get('data', '')}", flush=True)
+                        continue
+                    if t == "cmd":
+                        out = exec_cmd_local(data)
+                        if out:
+                            src.send(json.dumps({"t": "result", "data": out}))
                         continue
                     if '"peer_off"' in data:
                         log(f"pipe {name}: 外部機中斷，等待重連...")
@@ -74,6 +105,8 @@ def pipe(src, dst, name):
                         log(f"pipe {name}: 外部機已重新連線")
                         peer_gone_since = None
                         continue
+                    log(f"pipe {name}: 未知文字, 忽略")
+                    continue
                 if isinstance(dst, socket.socket):
                     data = xor(data)
             else:
