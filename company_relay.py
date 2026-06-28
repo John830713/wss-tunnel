@@ -1,4 +1,4 @@
-import socket, threading, sys, json, signal, time, subprocess
+import socket, threading, sys, json, signal, time, subprocess, os
 import websocket
 
 LOCAL_HOST = "127.0.0.1"

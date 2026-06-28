@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "D:\wss-tunnel\company_relay.py", line 8, in <module>
+    ROOM = os.environ.get("ROOM", "relay2026v2")
+NameError: name 'os' is not defined
