@@ -70,7 +70,7 @@ def handle_cmd(text, rdp_sock):
     else:
         log(f"未知指令: {t}")
 
-def ws_to_rdp(ws, rdp):
+def ws_to_rdp(ws, rdp, rdp_err):
     try:
         n = 0
         while True:
@@ -82,11 +82,17 @@ def ws_to_rdp(ws, rdp):
                 if n < 3:
                     log(f"收到 RDP 資料: {len(msg)} bytes {dec[:32].hex()}")
                     n += 1
-                rdp.sendall(dec)
+                try:
+                    rdp.sendall(dec)
+                except Exception as e:
+                    log(f"RDP 寫入錯誤: {e}")
+                    rdp_err.set()
+                    raise
             elif isinstance(msg, str):
                 handle_cmd(msg, rdp)
     except Exception as e:
-        log(f"ws→rdp 錯誤: {e}")
+        if not rdp_err.is_set():
+            log(f"ws→rdp 錯誤: {e}")
     finally:
         try: ws.close()
         except: pass
@@ -116,7 +122,7 @@ def recv_tpkt_timeout(sock, timeout=60):
         buf += d
     return buf
 
-def rdp_to_ws(rdp, ws):
+def rdp_to_ws(rdp, ws, rdp_err):
     try:
         n = 0
         while True:
@@ -126,9 +132,14 @@ def rdp_to_ws(rdp, ws):
             if n < 3:
                 log(f"rdp→ws 送出: {len(enc)} bytes {enc[:32].hex()}")
                 n += 1
-            ws.send(enc, websocket.ABNF.OPCODE_BINARY)
+            try:
+                ws.send(enc, websocket.ABNF.OPCODE_BINARY)
+            except Exception as e:
+                log(f"WS 寫入錯誤: {e}")
+                raise
     except Exception as e:
-        log(f"rdp→ws 錯誤: {e}")
+        if not rdp_err.is_set():
+            log(f"rdp→ws 錯誤: {e}")
 
 def main():
     url = f"wss://rdp-relay.fly.dev/{ROOM}"
@@ -161,14 +172,22 @@ def main():
                 log(f"已連線 (角色: {role})")
                 ws_fail = 0
 
+                rdp_err = threading.Event()
                 log("開始轉送")
-                t1 = threading.Thread(target=ws_to_rdp, args=(ws, rdp), daemon=True)
-                t2 = threading.Thread(target=rdp_to_ws, args=(rdp, ws), daemon=True)
+                t1 = threading.Thread(target=ws_to_rdp, args=(ws, rdp, rdp_err), daemon=True)
+                t2 = threading.Thread(target=rdp_to_ws, args=(rdp, ws, rdp_err), daemon=True)
                 t1.start(); t2.start()
                 t1.join()
                 log("ws→rdp pipe 結束（3 秒後重連 WebSocket）")
                 t2.join(timeout=3)
                 ws.close()
+
+                if rdp_err.is_set():
+                    log("RDP 連線已中斷，重新連線 RDP")
+                    rdp.close()
+                    time.sleep(3)
+                    break
+
                 time.sleep(3)
             except Exception as e:
                 log(f"WebSocket 錯誤: {e}")

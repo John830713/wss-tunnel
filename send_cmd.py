@@ -1,16 +1,18 @@
-import socket, sys, time
+import socket, sys, time, json
 
-cmd = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "help"
+cmd_text = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "help"
 
-# Connect to 13389 to trigger WS
+# Connect to 13389 to trigger WS (so active_ws gets set)
 s = socket.create_connection(("127.0.0.1", 13389), timeout=5)
-time.sleep(0.5)
+
+# Wait for WS connection to establish (read_first_tpkt 3s + ws.connect)
+time.sleep(5)
 
 # Send command via 13390
 c = socket.create_connection(("127.0.0.1", 13390), timeout=3)
-c.sendall(cmd.encode())
+c.sendall(cmd_text.encode())
 resp = c.recv(4096)
-print("Response:", resp.decode().strip())
+print(resp.decode().strip())
 c.close()
 time.sleep(2)
 s.close()

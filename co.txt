@@ -8,3 +8,12 @@
 [公司] 讀取到初始資料 19 bytes: 030000130ee00000000000010008000b000000
 [公司] 失敗: Connection to remote host was lost.
 [公司] 結束 ('127.0.0.1', 6958)
+[公司] mstsc 連入 ('127.0.0.1', 3513)
+[公司] 讀取到初始資料 19 bytes: 030000130ee00000000000010008000b000000
+[公司] WebSocket 已連線 (角色: b)
+[公司] 外部機已就緒
+[公司] 傳送緩衝 19 bytes: 030000130ee00000000000010008000b000000
+[公司] pipe C->R 啟動
+[公司] pipe R->C 啟動
+[公司] pipe C->R: 錯誤 [WinError 10054] An existing connection was forcibly closed by the remote host
+[公司] pipe C->R 結束
