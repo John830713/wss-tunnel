@@ -75,7 +75,9 @@ def ws_to_rdp(ws, rdp):
                 if n < 3:
                     log(f"收到 RDP 資料: {len(msg)} bytes {dec[:32].hex()}")
                     n += 1
+                log(f"ws→rdp 寫入 RDP socket {len(dec)} bytes")
                 rdp.sendall(dec)
+                log("ws→rdp 寫入完成")
             elif isinstance(msg, str):
                 handle_cmd(msg, rdp)
     except Exception as e:
@@ -88,6 +90,7 @@ def ws_to_rdp(ws, rdp):
 def rdp_to_ws(rdp, ws):
     try:
         n = 0
+        rdp.settimeout(15)
         while True:
             data = recv_tpkt(rdp)
             if not data: break
@@ -96,6 +99,8 @@ def rdp_to_ws(rdp, ws):
                 log(f"rdp→ws 送出: {len(enc)} bytes {enc[:32].hex()}")
                 n += 1
             ws.send(enc, websocket.ABNF.OPCODE_BINARY)
+    except socket.timeout:
+        log("rdp→ws 超時: RDP 15秒內無回應")
     except Exception as e:
         log(f"rdp→ws 錯誤: {e}")
     finally:
