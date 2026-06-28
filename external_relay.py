@@ -62,10 +62,14 @@ def handle_cmd(text, rdp_sock):
 
 def ws_to_rdp(ws, rdp):
     try:
+        n = 0
         while True:
             msg = ws.recv()
             if not msg: break
             if isinstance(msg, bytes):
+                if n < 3:
+                    log(f"收到 RDP 資料: {len(msg)} bytes {msg[:32].hex()}")
+                    n += 1
                 rdp.sendall(msg)
             elif isinstance(msg, str):
                 handle_cmd(msg, rdp)

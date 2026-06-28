@@ -114,7 +114,7 @@ def handle_client(conn, addr):
 
         reader.join(timeout=3)
         if buf:
-            log(f"傳送緩衝 {len(buf[0])} bytes")
+            log(f"傳送緩衝 {len(buf[0])} bytes: {buf[0][:32].hex()}")
             ws.send(buf[0], websocket.ABNF.OPCODE_BINARY)
 
         t1 = threading.Thread(target=pipe, args=(conn, ws, "C->R"), daemon=True)
