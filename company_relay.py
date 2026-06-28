@@ -1,4 +1,4 @@
-import socket, threading, sys, json, signal
+import socket, threading, sys, json, signal, time
 import websocket
 
 LOCAL_HOST = "127.0.0.1"
@@ -43,18 +43,30 @@ def recv_tpkt(sock):
 
 def pipe(src, dst, name):
     log(f"pipe {name} 啟動")
+    peer_gone_since = None
     try:
         while True:
             if isinstance(src, websocket.WebSocket):
-                data = src.recv()
+                src.settimeout(5)
+                try:
+                    data = src.recv()
+                except websocket.WebSocketTimeoutException:
+                    if peer_gone_since is not None and time.time() - peer_gone_since > 30:
+                        log(f"pipe {name}: 對方已中斷超過 30 秒，結束")
+                        break
+                    continue
                 if not data:
                     log(f"pipe {name}: 收到空資料, 結束")
                     break
                 if isinstance(data, str):
                     if '"peer_off"' in data:
-                        log(f"pipe {name}: 外部機中斷")
-                        break
-                    continue
+                        log(f"pipe {name}: 外部機中斷，等待重連...")
+                        peer_gone_since = time.time()
+                        continue
+                    if '"peer_on"' in data:
+                        log(f"pipe {name}: 外部機已重新連線")
+                        peer_gone_since = None
+                        continue
                 if isinstance(dst, socket.socket):
                     data = xor(data)
             else:
@@ -68,14 +80,12 @@ def pipe(src, dst, name):
                 dst.send(data, websocket.ABNF.OPCODE_BINARY)
             else:
                 dst.sendall(data)
+            if peer_gone_since is not None:
+                peer_gone_since = time.time()
     except websocket.WebSocketConnectionClosedException:
         log(f"pipe {name}: WebSocket 關閉")
     except Exception as e:
         log(f"pipe {name}: 錯誤 {e}")
-    finally:
-        for s in (src, dst):
-            try: s.close()
-            except: pass
     log(f"pipe {name} 結束")
 
 def cmd_listener():
