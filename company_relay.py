@@ -6,12 +6,16 @@ LOCAL_PORT = 13389
 CMD_PORT = 13390
 BUFFER = 65536
 ROOM = "relay2026v2"
+XOR_KEY = 0x55
 
 active_ws = None
 active_lock = threading.Lock()
 
 def log(msg):
     print(f"[公司] {msg}", flush=True)
+
+def xor(data):
+    return bytes(b ^ XOR_KEY for b in data)
 
 def recv_tpkt(sock):
     buf = b""
@@ -46,11 +50,15 @@ def pipe(src, dst, name):
                         log(f"pipe {name}: 外部機中斷")
                         break
                     continue
+                if isinstance(dst, socket.socket):
+                    data = xor(data)
             else:
                 data = recv_tpkt(src)
                 if not data:
                     log(f"pipe {name}: TCP 收到空資料, 結束")
                     break
+                if isinstance(dst, websocket.WebSocket):
+                    data = xor(data)
             if isinstance(dst, websocket.WebSocket):
                 dst.send(data, websocket.ABNF.OPCODE_BINARY)
             else:
@@ -115,7 +123,7 @@ def handle_client(conn, addr):
         reader.join(timeout=3)
         if buf:
             log(f"傳送緩衝 {len(buf[0])} bytes: {buf[0][:32].hex()}")
-            ws.send(buf[0], websocket.ABNF.OPCODE_BINARY)
+            ws.send(xor(buf[0]), websocket.ABNF.OPCODE_BINARY)
 
         t1 = threading.Thread(target=pipe, args=(conn, ws, "C->R"), daemon=True)
         t2 = threading.Thread(target=pipe, args=(ws, conn, "R->C"), daemon=True)

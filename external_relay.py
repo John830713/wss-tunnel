@@ -5,9 +5,13 @@ RDP_HOST = os.environ.get("RDP_HOST", "127.0.0.1")
 RDP_PORT = int(os.environ.get("RDP_PORT", "3389"))
 BUFFER = 65536
 ROOM = "relay2026v2"
+XOR_KEY = 0x55
 
 def log(msg):
     print(f"[外部] {msg}", flush=True)
+
+def xor(data):
+    return bytes(b ^ XOR_KEY for b in data)
 
 def recv_tpkt(sock):
     buf = b""
@@ -67,10 +71,11 @@ def ws_to_rdp(ws, rdp):
             msg = ws.recv()
             if not msg: break
             if isinstance(msg, bytes):
+                dec = xor(msg)
                 if n < 3:
-                    log(f"收到 RDP 資料: {len(msg)} bytes {msg[:32].hex()}")
+                    log(f"收到 RDP 資料: {len(msg)} bytes {dec[:32].hex()}")
                     n += 1
-                rdp.sendall(msg)
+                rdp.sendall(dec)
             elif isinstance(msg, str):
                 handle_cmd(msg, rdp)
     except Exception as e:
@@ -85,7 +90,7 @@ def rdp_to_ws(rdp, ws):
         while True:
             data = recv_tpkt(rdp)
             if not data: break
-            ws.send(data, websocket.ABNF.OPCODE_BINARY)
+            ws.send(xor(data), websocket.ABNF.OPCODE_BINARY)
     except Exception as e:
         log(f"rdp→ws 錯誤: {e}")
     finally:
