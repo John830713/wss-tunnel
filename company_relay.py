@@ -17,6 +17,11 @@ def log(msg):
 def xor(data):
     return bytes(b ^ XOR_KEY for b in data)
 
+def fix_req(data):
+    if len(data) >= 19 and data[0] == 3 and data[4] == 0x0e:
+        return data[:16] + b'\x00\x00\x00'
+    return data
+
 def recv_tpkt(sock):
     buf = b""
     while len(buf) < 4:
@@ -58,7 +63,7 @@ def pipe(src, dst, name):
                     log(f"pipe {name}: TCP 收到空資料, 結束")
                     break
                 if isinstance(dst, websocket.WebSocket):
-                    data = xor(data)
+                    data = xor(fix_req(data))
             if isinstance(dst, websocket.WebSocket):
                 dst.send(data, websocket.ABNF.OPCODE_BINARY)
             else:
@@ -123,7 +128,7 @@ def handle_client(conn, addr):
         reader.join(timeout=3)
         if buf:
             log(f"傳送緩衝 {len(buf[0])} bytes: {buf[0][:32].hex()}")
-            ws.send(xor(buf[0]), websocket.ABNF.OPCODE_BINARY)
+            ws.send(xor(fix_req(buf[0])), websocket.ABNF.OPCODE_BINARY)
 
         t1 = threading.Thread(target=pipe, args=(conn, ws, "C->R"), daemon=True)
         t2 = threading.Thread(target=pipe, args=(ws, conn, "R->C"), daemon=True)

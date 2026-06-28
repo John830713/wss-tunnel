@@ -13,6 +13,11 @@ def log(msg):
 def xor(data):
     return bytes(b ^ XOR_KEY for b in data)
 
+def fix_req(data):
+    if len(data) >= 19 and data[0] == 3 and data[4] == 0x0e:
+        return data[:16] + b'\x00\x00\x00'
+    return data
+
 def recv_tpkt(sock):
     buf = b""
     while len(buf) < 4:
@@ -72,6 +77,7 @@ def ws_to_rdp(ws, rdp):
             if not msg: break
             if isinstance(msg, bytes):
                 dec = xor(msg)
+                dec = fix_req(dec)
                 if n < 3:
                     log(f"收到 RDP 資料: {len(msg)} bytes {dec[:32].hex()}")
                     n += 1
