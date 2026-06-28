@@ -1,4 +1,4 @@
-import socket, threading, sys, json, time, subprocess, os
+import socket, threading, sys, json, time, subprocess, os, signal
 import websocket
 
 RDP_HOST = os.environ.get("RDP_HOST", "127.0.0.1")
@@ -87,10 +87,15 @@ def ws_to_rdp(ws, rdp):
 
 def rdp_to_ws(rdp, ws):
     try:
+        n = 0
         while True:
             data = recv_tpkt(rdp)
             if not data: break
-            ws.send(xor(data), websocket.ABNF.OPCODE_BINARY)
+            enc = xor(data)
+            if n < 3:
+                log(f"rdp→ws 送出: {len(enc)} bytes {enc[:32].hex()}")
+                n += 1
+            ws.send(enc, websocket.ABNF.OPCODE_BINARY)
     except Exception as e:
         log(f"rdp→ws 錯誤: {e}")
     finally:
@@ -101,6 +106,11 @@ def rdp_to_ws(rdp, ws):
 def main():
     url = f"wss://rdp-relay.fly.dev/{ROOM}"
     log(f"目標: {url}")
+
+    def shutdown(sig, frame):
+        log("結束"); sys.exit(0)
+    signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
 
     while True:
         try:

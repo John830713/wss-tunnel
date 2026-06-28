@@ -152,11 +152,14 @@ def main():
     def shutdown(sig, frame):
         log("結束"); server.close(); sys.exit(0)
     signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
 
     while True:
         try:
             sock, addr = server.accept()
             threading.Thread(target=handle_client, args=(sock, addr), daemon=True).start()
+        except KeyboardInterrupt:
+            log("結束"); break
         except:
             break
 
