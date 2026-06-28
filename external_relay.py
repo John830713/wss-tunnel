@@ -69,8 +69,9 @@ def handle_cmd(text, rdp_sock):
         return out + "\n" + out2
     elif t == "restart":
         log("重新啟動...")
-        subprocess.Popen([sys.executable, os.path.abspath(__file__)])
-        time.sleep(1)
+        script = os.path.abspath(__file__)
+        subprocess.Popen(f'start "Ext Relay v2" "{sys.executable}" "{script}"', shell=True)
+        time.sleep(2)
         rdp_sock.close()
         os._exit(0)
     elif t == "exec":

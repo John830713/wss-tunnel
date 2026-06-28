@@ -1,0 +1,33 @@
+[公司] 監聽 :13389 (RDP)  指令埠 :13390
+[公司] 使用: python snc.py <指令>
+[公司] 指令埠 :13390
+[公司] mstsc 連入 ('127.0.0.1', 7270)
+[公司] WebSocket 已連線 (角色: b)
+[公司] 外部機已就緒
+[公司] 等待外部機傳送初始資料...
+[公司] pipe C->R 啟動
+[公司] pipe R->C 啟動
+[公司] pipe C->R: 錯誤 [WinError 10054] An existing connection was forcibly closed by the remote host
+[公司] pipe C->R 結束
+[公司] mstsc 連入 ('127.0.0.1', 9256)
+[公司] 已傳送指令: {"cmd": "pull"}
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 9256)
+[外部結果] Updating 4ab7a4e..9954db2
+Fast-forward
+ company_err.txt   |   4 ++++
+ company_out.txt   | Bin 6872 -> 1116 bytes
+ company_out2.txt  |   0
+ company_relay.py  |   4 ++--
+ external_relay.py |   4 +++-
+ 5 files changed, 9 insertions(+), 3 deletions(-)
+ create mode 100644 company_out2.txt
+[公司] 已傳送指令: {"cmd": "restart"}
+[公司] pipe R->C: 外部機中斷，等待重連...
+[公司] pipe R->C: 外部機已重新連線
+[公司] pipe R->C: 外部機中斷，等待重連...
+[公司] pipe R->C: 外部機已重新連線
+[公司] pipe R->C: 外部機中斷，等待重連...
+[公司] pipe R->C: 對方已中斷超過 30 秒，結束
+[公司] pipe R->C 結束
+[公司] 結束 ('127.0.0.1', 7270)
