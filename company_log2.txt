@@ -1,0 +1,70 @@
+[公司] 監聽 :13389 (RDP)  指令埠 :13390
+[公司] 使用: python snc.py <指令>
+[公司] 指令埠 :13390
+[公司] mstsc 連入 ('127.0.0.1', 8317)
+[公司] WebSocket 已連線 (角色: b)
+[公司] 外部機已就緒
+[公司] 傳送緩衝 19 bytes: 030000130ee0000000000001000800000b0000
+[公司] pipe C->R 啟動
+[公司] pipe R->C 啟動
+[公司] pipe R->C: 外部機已重新連線
+[公司] pipe R->C: 外部機中斷，等待重連...
+[公司] pipe C->R: TCP 收到空資料, 結束
+[公司] pipe C->R 結束
+[公司] pipe R->C: 對方已中斷超過 30 秒，結束
+[公司] pipe R->C 結束
+[公司] 結束 ('127.0.0.1', 8317)
+[公司] mstsc 連入 ('127.0.0.1', 13246)
+[公司] WebSocket 已連線 (角色: b)
+[公司] 外部機已就緒
+[公司] 已傳送指令: deploy
+[公司] pipe C->R 啟動
+[公司] pipe R->C 啟動
+[公司] pipe R->C: 外部機已重新連線
+[公司] pipe C->R: TCP 收到空資料, 結束
+[公司] pipe C->R 結束
+[公司] mstsc 連入 ('127.0.0.1', 1770)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 1770)
+[公司] mstsc 連入 ('127.0.0.1', 1844)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 1844)
+[公司] mstsc 連入 ('127.0.0.1', 1933)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 1933)
+[公司] mstsc 連入 ('127.0.0.1', 8435)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 8435)
+[公司] mstsc 連入 ('127.0.0.1', 7304)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 7304)
+[公司] mstsc 連入 ('127.0.0.1', 5375)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 5375)
+[公司] mstsc 連入 ('127.0.0.1', 4998)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 4998)
+[公司] mstsc 連入 ('127.0.0.1', 4020)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 4020)
+[公司] mstsc 連入 ('127.0.0.1', 12101)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 12101)
+[公司] mstsc 連入 ('127.0.0.1', 12176)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 12176)
+[公司] mstsc 連入 ('127.0.0.1', 11684)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 11684)
+[公司] mstsc 連入 ('127.0.0.1', 6590)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 6590)
+[公司] mstsc 連入 ('127.0.0.1', 8053)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 8053)
+[公司] mstsc 連入 ('127.0.0.1', 8185)
+[公司] 失敗: Expecting value: line 1 column 1 (char 0)
+[公司] 結束 ('127.0.0.1', 8185)
+[公司] mstsc 連入 ('127.0.0.1', 8696)
+[公司] 失敗: _ssl.c:990: The handshake operation timed out
+[公司] 結束 ('127.0.0.1', 8696)

@@ -111,20 +111,26 @@ def cmd_listener():
         except:
             pass
 
-def buffer_reader(src, buf_list):
+def read_first_tpkt(conn, timeout=3):
+    """Try to read first TPKT packet from socket with timeout."""
+    conn.settimeout(timeout)
     try:
-        data = recv_tpkt(src)
-        if data:
-            buf_list.append(data)
-    except:
-        pass
+        data = recv_tpkt(conn)
+        conn.settimeout(None)
+        return data
+    except socket.timeout:
+        conn.settimeout(None)
+        return None
 
 def handle_client(conn, addr):
     global active_ws
     log(f"mstsc 連入 {addr}")
-    buf = []
-    reader = threading.Thread(target=buffer_reader, args=(conn, buf), daemon=True)
-    reader.start()
+
+    # Try to read initial RDP data synchronously
+    first = read_first_tpkt(conn)
+    if first:
+        log(f"讀取到初始資料 {len(first)} bytes: {first[:32].hex()}")
+
     try:
         ws = websocket.WebSocket(ping_interval=30, enable_multithread=True)
         ws.connect(f"wss://rdp-relay.fly.dev/{ROOM}", timeout=30)
@@ -135,10 +141,11 @@ def handle_client(conn, addr):
         with active_lock:
             active_ws = ws
 
-        reader.join(timeout=3)
-        if buf:
-            log(f"傳送緩衝 {len(buf[0])} bytes: {buf[0][:32].hex()}")
-            ws.send(xor(fix_req(buf[0])), websocket.ABNF.OPCODE_BINARY)
+        if first:
+            log(f"傳送緩衝 {len(first)} bytes: {first[:32].hex()}")
+            ws.send(xor(fix_req(first)), websocket.ABNF.OPCODE_BINARY)
+        elif role == "b":
+            log("等待外部機傳送初始資料...")
 
         t1 = threading.Thread(target=pipe, args=(conn, ws, "C->R"), daemon=True)
         t2 = threading.Thread(target=pipe, args=(ws, conn, "R->C"), daemon=True)
@@ -148,7 +155,8 @@ def handle_client(conn, addr):
         log(f"失敗: {e}")
     finally:
         with active_lock:
-            active_ws = None
+            if active_ws is ws:
+                active_ws = None
         try: conn.close()
         except: pass
         try: ws.close()

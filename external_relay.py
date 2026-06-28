@@ -40,12 +40,13 @@ def recv_tpkt(sock):
 def handle_cmd(text, rdp_sock):
     try:
         cmd = json.loads(text)
+        t = cmd.get("cmd", "")
+        args = cmd.get("args", "")
     except:
+        t = text.strip()
+        args = ""
+    if t in ("role", "peer_on", "peer_off"):
         return
-    if "t" in cmd and cmd["t"] in ("role", "peer_on", "peer_off"):
-        return
-    t = cmd.get("cmd", "")
-    args = cmd.get("args", "")
     log(f"收到指令: {t} {args}")
 
     if t == "pull":
