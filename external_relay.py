@@ -10,6 +10,8 @@ XOR_KEY = 0x55
 def log(msg):
     print(f"[外部] {msg}", flush=True)
 
+log("啟動版本 2026-06-28")
+
 def xor(data):
     return bytes(b ^ XOR_KEY for b in data)
 
