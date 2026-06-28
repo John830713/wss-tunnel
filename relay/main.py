@@ -18,7 +18,8 @@ async def handler(ws):
         room["a"] = ws; role = "a"
     elif room["b"] is None:
         room["b"] = ws; role = "b"
-        await room["a"].send(json.dumps({"t": "peer_on"}))
+        if room["a"] is not None:
+            await room["a"].send(json.dumps({"t": "peer_on"}))
     else:
         await ws.close(1008, "room full")
         return
