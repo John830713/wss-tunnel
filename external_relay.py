@@ -4,7 +4,7 @@ import websocket
 RDP_HOST = os.environ.get("RDP_HOST", "127.0.0.1")
 RDP_PORT = int(os.environ.get("RDP_PORT", "3389"))
 BUFFER = 65536
-ROOM = "relay2026"
+ROOM = "relay2026v2"
 
 def log(msg):
     print(f"[外部] {msg}", flush=True)

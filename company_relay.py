@@ -5,7 +5,7 @@ LOCAL_HOST = "127.0.0.1"
 LOCAL_PORT = 13389
 CMD_PORT = 13390
 BUFFER = 65536
-ROOM = "relay2026"
+ROOM = "relay2026v2"
 
 active_ws = None
 active_lock = threading.Lock()
